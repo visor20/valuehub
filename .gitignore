@@ -1,0 +1,7 @@
+# API KEY
+.src/private_settings.py
+
+# dirs
+data/
+venv/
+src/__pycache__

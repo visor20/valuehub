@@ -1,35 +1,50 @@
 # main python module
 
-import settings
-from private_settings import PRIVATE_KEY
 import requests
-import csv
+from datetime import datetime, timedelta
 import numpy as np
 import pandas as pd
-from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+import settings
+from private_settings import FMP_PRIVATE_KEY
 
-# financial modeling prep key (unique to user)
-api_key = PRIVATE_KEY
+# backend flask requires CORS for comm. across ports
+app = Flask(__name__)
+app.json.sort_keys = False 
+CORS(app)
 
-def get_openinsider():
+
+def get_openinsider(lookback: int) -> pd.DataFrame:
+    """
+    Parameters
+    ----------
+        lookback (int) - from today, number of days to collect data
+
+    Return
+    ------
+        pd.DataFrame containing openinsider data
+    """
     data = pd.DataFrame(columns=settings.KEYS)
-
     end = datetime.now()
-    start = end - timedelta(days=settings.LOOKBACK)
+    start = end - timedelta(days=lookback)
     start_str = start.strftime('%m/%d/%Y')
     end_str = end.strftime('%m/%d/%Y')
-    print("start - end: " + start_str + "-" + end_str + '\n')
 
-    url = f'http://openinsider.com/screener?s=&o=&pl=&ph=&ll=&lh=&fd=-1&fdr={start_str}+-+{end_str}&td=0&tdr=&fdlyl=&fdlyh=&daysago=&xp=1&xs=1&vl=&vh=&ocl=&och=&sic1=-1&sicl=100&sich=9999&grp=0&nfl=&nfh=&nil=&nih=&nol=&noh=&v2l=&v2h=&oc2l=&oc2h=&sortcol=0&cnt=5000&page=1'
+    # url (purchase only && trades exceeding 10k)
+    url = f'http://openinsider.com/screener?s=&o=&pl=&ph=&ll=&lh=&fd=-1&fdr={start_str}+-+{end_str}&td=0&tdr=&fdlyl=&fdlyh=&daysago=&xp=1&vl=10&vh=&ocl=&och=&sic1=-1&sicl=100&sich=9999&grp=0&nfl=&nfh=&nil=&nih=&nol=&noh=&v2l=&v2h=&oc2l=&oc2h=&sortcol=0&cnt=100&page=1'
    
+    # GET the FMP API data
     response = requests.get(url)
     soup =  BeautifulSoup(response.text, 'html.parser')
     
     try:
+        # openinsider table has class="tinytable"
         rows = soup.find('table', {'class': 'tinytable'}).find('tbody').findAll('tr')
     except:
-        print("URL ERROR")
+        # logging might be best here...
+        print("Cannot access Openinsider table")
         return
 
     for row in rows:
@@ -48,11 +63,6 @@ def drop_columns(df):
     df.drop('trade_type', axis=1, inplace=True)
 
 
-def filter_data(data):
-    filtered = data[data['trade_type'] == 'P - Purchase']
-    return filtered.reset_index(drop=True)
-
-
 def get_ticker_dict(data):
     td = {}
     for i, r in data.iterrows():
@@ -64,41 +74,62 @@ def get_ticker_dict(data):
     return td
 
 
-def main():
-    data = filter_data(get_openinsider())
-    drop_columns(data)
-    ticker_dict = get_ticker_dict(data)
+@app.route('/api/stocks', methods=['GET'])
+def get_valuehub_data():
+    """ 
+    Get the open insider and fundamental data.
     
-    df = pd.DataFrame(columns=['ticker', 'sector', 'price', 'DCF', 'market_cap', 'num_trades', 'P/E', 'PEG', 'P/B'])
+    frontend arguments
+    ------------------
+        lookback (int), cluster_val (int)
+
+    Return
+    ------
+        Response Object: Response containing JSON for frontend.
+    """
+    lookback = request.args.get('lookback', type=int)
+    cluster_val = request.args.get('cluster_val', type=int)
+
+    data = get_openinsider(lookback)
+    drop_columns(data)
+
+    ticker_dict = get_ticker_dict(data)
+    df = pd.DataFrame(columns=['ticker', 'sector', 'price', 'mkt_cap', 'num_trades', 'PS', 'PB', 'PE', 'PEG', 'DCF'])
     for t in ticker_dict.items():
-        if t[1] >= settings.CLUSTER_VAL:
+        if t[1] >= cluster_val:
             # TTM == trailing twelve months
-            ratios_url = f'https://financialmodelingprep.com/api/v3/ratios-ttm/{t[0]}?apikey={api_key}'
-            profile_url = f'https://financialmodelingprep.com/api/v3/profile/{t[0]}?apikey={api_key}'
+            ratios_url = f'https://financialmodelingprep.com/api/v3/ratios-ttm/{t[0]}?apikey={FMP_PRIVATE_KEY}'
+            profile_url = f'https://financialmodelingprep.com/api/v3/profile/{t[0]}?apikey={FMP_PRIVATE_KEY}'
 
-            ratios_response = requests.get(ratios_url)
-            profile_response = requests.get(profile_url)
-            r_data = ratios_response.json()
-            p_data = profile_response.json()
+            r_data = requests.get(ratios_url).json()
+            p_data = requests.get(profile_url).json()
 
-            sector, price, dcf, mkt_cap, pe, pb, peg = 0, 0, 0, 0, 0, 0, 0
-            if r_data:
-                pe = r_data[0]['peRatioTTM']
-                pb = r_data[0]['priceToBookRatioTTM']
-                peg = r_data[0]['pegRatioTTM']
-
-            if p_data:
+            if r_data and p_data:
+                sector, price, dcf, mkt_cap, ps, pe, pb, peg = 0, 0, 0, 0, 0, 0, 0, 0
+                pe = round(r_data[0]['peRatioTTM'], settings.NUM_DECIMALS)
+                pb = round(r_data[0]['priceToBookRatioTTM'], settings.NUM_DECIMALS)
+                peg = round(r_data[0]['pegRatioTTM'], settings.NUM_DECIMALS)
+                ps = round(r_data[0]['priceToSalesRatioTTM'], settings.NUM_DECIMALS)
                 sector = p_data[0]['sector']
                 price = p_data[0]['price']
-                dcf = p_data[0]['dcf']
-                mkt_cap = p_data[0]['mktCap']
+                dcf = round(p_data[0]['dcf'], settings.NUM_DECIMALS)
+                mkt_cap = int(p_data[0]['mktCap'] / settings.MKT_CAP_MULT) # puts it in millions
 
-            df.loc[len(df)] = ({'ticker': t[0], 'sector': sector,
-                                'price': price, 'DCF': dcf, 'market_cap': mkt_cap, 
-                                'num_trades': t[1], 'P/E': pe, 'PEG': peg, 'P/B': pb})
+                df.loc[len(df)] = ({'ticker': t[0], 'sector': sector,
+                                'price': price, 'mkt_cap': mkt_cap,
+                                'num_trades': t[1], 'PS': ps, 'PB': pb,
+                                'PE': pe, 'PEG': peg, 'DCF': dcf})
 
-    sorted_df = df.sort_values(by='P/E')
-    print(sorted_df.reset_index(drop=True))
+    sorted_df = df.sort_values(by='PE')
+    sorted_df.reset_index(drop=True, inplace=True)
+
+    # debug tool
+    if settings.PRINT_TOGGLE:
+        print(sorted_df)
+    return jsonify(sorted_df.to_dict(orient='index'))
+
 
 if __name__ == "__main__":
-    main()
+    app.run(debug=True)
+
+

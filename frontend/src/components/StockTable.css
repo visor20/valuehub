@@ -1,0 +1,10 @@
+.stock-table
+{
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.stock-table td, th
+{
+  padding: 1em;
+}

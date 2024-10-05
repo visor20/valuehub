@@ -1,5 +1,5 @@
 # API KEY
-.src/private_settings.py
+src/private_settings.py
 
 # dirs
 data/

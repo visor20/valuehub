@@ -11,8 +11,10 @@ function App()
   const [cluster_val, set_cluster_val] = useState(1);
   const [stocks, set_stocks] = useState({});
   const [loading, set_loading] = useState(true);
+  const [radio_value, set_radio_value] = useState("PS");
 
-  const handle_submit = () => {
+  const handle_submit = () =>
+  {
     // Send the GET request to Flask with slider values as query parameters
     fetch(`http://localhost:5000/api/stocks?lookback=${lookback}&cluster_val=${cluster_val}`, {method: 'GET'})
       .then(response => response.json()) // "promise" body converted to a json...
@@ -24,6 +26,11 @@ function App()
         set_loading(false);
         console.error('Error fetching stocks:', error);
       });
+  };
+
+  const handle_radio_change = (changeEvent) =>
+  {
+	set_radio_value(changeEvent.target.value);	
   };
 
   return (
@@ -55,11 +62,31 @@ function App()
               onChange={(e) => set_cluster_val(e.target.value)}
             />
           </div>
+		<form>
+			<div className="radio">
+			  <label>
+				<input type="radio" value="PS" checked={radio_value === "PS"} onChange={handle_radio_change}/>
+				P/S
+			  </label>
+			</div>
+			<div className="radio">
+			  <label>
+				<input type="radio" value="PB" checked={radio_value === "PB"} onChange={handle_radio_change}/>
+				P/B
+			  </label>
+			</div>
+			<div className="radio">
+			  <label>
+				<input type="radio" value="PE" checked={radio_value === "PE"} onChange={handle_radio_change}/>
+				P/E
+			  </label>
+			</div>
+		  </form>
           <button onClick={handle_submit}>Submit</button>
         </div>
 
         <div className="table-container">
-          <StockTable loading={loading} stocks={stocks}/>
+          <StockTable loading={loading} stocks={stocks} radio_value={radio_value}/>
         </div>
       </div>
     </div>

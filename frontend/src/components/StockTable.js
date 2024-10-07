@@ -6,7 +6,7 @@ const clamp = (value, min, max) =>
   return Math.max(min, Math.min(value, max));
 }
 
-const setStyle = (data) =>
+const setRowStyle = (data) =>
 {
   // -zero = most green, +10 = most red
   const clamped_data = clamp(data, 0, 5);
@@ -15,6 +15,18 @@ const setStyle = (data) =>
   const b = 80;
 
   return `rgb(${r}, ${g}, ${b})`
+};
+
+const setHeaderStyle = (header, color_key) =>
+{
+  if (header === color_key)
+  {
+    return '#FF00FF';
+  }
+  else
+  {
+    return '#FFFFFF';
+  }
 };
 
 const StockTable = (props) => 
@@ -36,7 +48,7 @@ const StockTable = (props) =>
     }
 
     const headers = Object.keys(props.stocks[0]);
-    const color_key = headers[5];
+    const color_key = props.radio_value;
 
     if (headers.length === 0)
     {
@@ -48,13 +60,13 @@ const StockTable = (props) =>
         <thead>
           <tr>
             {headers.map((header, index) => (
-            <th key={index}>{header}</th>
+            <th style={{backgroundColor: setHeaderStyle(header, color_key)}} key={index}>{header}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {Object.values(props.stocks).map((item, rowIndex) => (
-            <tr style={{backgroundColor: setStyle(item[color_key])}} key={rowIndex}>
+            <tr style={{backgroundColor: setRowStyle(item[color_key])}} key={rowIndex}>
               {headers.map((header, colIndex) => (
               <td key={colIndex}>{item[header]}</td>
               ))}

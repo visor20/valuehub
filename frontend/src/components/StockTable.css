@@ -1,3 +1,12 @@
+@value --green from url('../../src/App.css');
+@value --light-green from url('../../src/App.css');
+@value --gray from url('../../src/app.css');
+@value --light-red from url('../../src/App.css');
+@value --red from url('../../src/App.css');
+@value --black from url('../../src/app.css');
+@value --white from url('../../src/app.css');
+
+
 .stock-table
 {
   margin-left: auto;

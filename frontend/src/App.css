@@ -2,6 +2,8 @@
 {
   --green: #2eab50;
   --light-green: #34d760;
+  --light-red: #d44a6a;
+  --red: #d13d3f;
   --white: #fbfff5;
   --gray: #dfdfdf;
   --black: #0f1f2e;
@@ -28,14 +30,16 @@ body
 {
   display: flex;
   width: 100%;
+  margin-top: 2em;
 }
 
 .slider-container
 {
-  flex-basis: 33%;
+  flex-basis: 35%;
+  margin-top: 1em;
   text-align: left;
   margin-top: 2em;
-  margin-left: 4em;
+  margin-left: 2em;
 }
 
 .slider-container button
@@ -57,9 +61,9 @@ body
 .table-container
 { 
   text-align: center;
-  margin-right: 4em;
+  margin-right: 2em;
   margin-left: 2em;
-  flex-basis: 67%;
+  flex-basis: 65%;
 }
 
 .slider input[type='range']
@@ -70,7 +74,7 @@ body
   height: 1em;
   border-radius: 0.5em;
   background: var(--gray);
-  margin-bottom: 2em;
+  margin-bottom: 2.5em;
 }
 
 .slider input[type='range']::-webkit-slider-thumb
@@ -127,4 +131,52 @@ body
 .slider input[type='range']:focus
 {
   outline: none;
+}
+
+.radio input[type="radio"]
+{
+  display: none;
+}
+
+.radio
+{
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  margin-bottom: 2em; /** for the submit button **/
+  margin-right: 1em;
+  font-size: 1em;
+}
+
+
+/** for the actual radio circles **/
+.radio-design
+{
+  width: 1em;
+  height: 1em;
+  border: 2px solid var(--gray);
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 1em;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.radio input[type="radio"]:checked + .radio-design
+{
+  background-color: var(--light-green);
+  border-color: var(--green);
+}
+
+.radio input[type="radio"]:checked + .radio-design::after
+{
+    content: '';
+    width: 1em;
+    height: 1em;
+    background-color: --var(--white);
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }

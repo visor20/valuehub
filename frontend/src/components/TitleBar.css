@@ -1,0 +1,37 @@
+@value --green from url('../../src/App.css');
+@value --black from url('../../src/app.css');
+@value --white from url('../../src/app.css');
+@value --gray from url('../../src/app.css');
+
+
+.title-bar-container
+{
+  display: flex;
+  align-items: center; /** vertical **/
+  justify-content: left;
+  background-color: var(--gray);
+}
+
+.title-bar-text1
+{
+  color: var(--green);
+  font-size: 1em;
+}
+
+.title-bar-text2
+{
+  color: var(--black);
+  font-size: 1em;
+}
+
+.title-bar-logo
+{
+  margin-left: 1em;
+  margin-right: 1em; /** space before title **/
+}
+
+.title-bar-logo img
+{
+  width: 5em;
+  height: auto;
+}

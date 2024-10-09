@@ -9,23 +9,38 @@ const clamp = (value, min, max) =>
 const setRowStyle = (data) =>
 {
   // -zero = most green, +10 = most red
-  const clamped_data = clamp(data, 0, 5);
-  const r = (clamped_data / 5) * 255;
-  const g = 255 - r;
-  const b = 80;
-
-  return `rgb(${r}, ${g}, ${b})`
+  const clamped_data = clamp(data, -1, 8);
+  if (clamped_data < 0 || clamped_data > 7)
+  {
+    return 'var(--light-red)';
+  }
+  else if (clamped_data < 2)
+  {
+    return 'var(--light-green)';
+  }
+  else if (clamped_data < 3)
+  {
+    return 'var(--green)';
+  }
+  else if (clamped_data < 5)
+  {
+    return 'var(--gray)';
+  }
+  else
+  {
+    return 'var(--red)';
+  }
 };
 
 const setHeaderStyle = (header, color_key) =>
 {
   if (header === color_key)
   {
-    return '#FF00FF';
+    return 'var(--gray)';
   }
   else
   {
-    return '#FFFFFF';
+    return 'var(--white)';
   }
 };
 

@@ -2,7 +2,7 @@ import './App.css';
 import React from 'react';
 import { useState } from 'react';
 import StockTable from './components/StockTable';
-
+import TitleBar from './components/TitleBar';
 
 function App()
 {
@@ -35,15 +35,11 @@ function App()
 
   return (
     <div className="app">
-
-      <header className="app-header">
-        <h1>ValueHub</h1>
-      </header>
-
+      <TitleBar word1={"Value"} word2={"Hub"} />
       <div className="main-container">
         <div className="slider-container">
           <div className="slider">
-            <label>Lookback: {lookback}</label>
+            <label>Lookback (in days): {lookback}</label>
             <input
               type="range"
               min="1"
@@ -53,7 +49,7 @@ function App()
             />
           </div>
           <div className="slider">
-            <label>Cluster Threshold: {cluster_val}</label>
+            <label>Number of inside buyers: {cluster_val}</label>
             <input
               type="range"
               min="1"
@@ -63,24 +59,21 @@ function App()
             />
           </div>
 		<form>
-			<div className="radio">
-			  <label>
-				<input type="radio" value="PS" checked={radio_value === "PS"} onChange={handle_radio_change}/>
-				P/S
-			  </label>
-			</div>
-			<div className="radio">
-			  <label>
-				<input type="radio" value="PB" checked={radio_value === "PB"} onChange={handle_radio_change}/>
-				P/B
-			  </label>
-			</div>
-			<div className="radio">
-			  <label>
-				<input type="radio" value="PE" checked={radio_value === "PE"} onChange={handle_radio_change}/>
-				P/E
-			  </label>
-			</div>
+                        <label className="radio">
+                              <input type="radio" value="PS" checked={radio_value === "PS"} onChange={handle_radio_change}/>
+                              <span class="radio-design"></span>
+                              P/S
+                        </label>
+                        <label className="radio">
+                              <input type="radio" value="PB" checked={radio_value === "PB"} onChange={handle_radio_change}/>
+                              <span class="radio-design"></span>
+                              P/B
+                        </label>
+                        <label className="radio">
+                              <input type="radio" value="PE" checked={radio_value === "PE"} onChange={handle_radio_change}/>
+                              <span class="radio-design"></span>
+                              P/E
+                        </label>
 		  </form>
           <button onClick={handle_submit}>Submit</button>
         </div>

@@ -1,3 +1,9 @@
+@font-face
+{
+  font-family: 'Made Tommy';
+  src: local('Made Tommy'), url(./fonts/MADE TOMMY Regular_PERSONAL USE.otf) format('opentype');
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',

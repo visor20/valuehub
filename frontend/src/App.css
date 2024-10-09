@@ -16,6 +16,7 @@ body
 
 .app
 {
+  font-family: Made Tommy, sans-serif;
   text-align: left;
   color: var(--black);
   width: 100%;

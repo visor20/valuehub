@@ -1,5 +1,3 @@
-# main python module
-
 import requests
 from datetime import datetime, timedelta
 import numpy as np
@@ -9,6 +7,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import settings
 from private_settings import FMP_PRIVATE_KEY
+
 
 # backend flask requires CORS for comm. across ports
 app = Flask(__name__)
@@ -74,6 +73,22 @@ def get_ticker_dict(data):
     return td
 
 
+def check_for_nulls(r_node, p_node):
+    if not r_node or not p_node:
+        return False
+   
+    r_of_interest = ['peRatioTTM', 'priceToBookRatioTTM', 'pegRatioTTM', 'priceToSalesRatioTTM']
+    for rv in r_node: 
+        if rv in r_of_interest and r_node[rv] == None:
+            return False
+
+    p_of_interest = ['price', 'sector', 'mkt_cap']
+    for pv in p_node:
+        if pv in p_of_interest and p_node[pv] == None:
+            return False
+    return True
+
+
 @app.route('/api/stocks', methods=['GET'])
 def get_valuehub_data():
     """ 
@@ -92,8 +107,8 @@ def get_valuehub_data():
 
     data = get_openinsider(lookback)
     drop_columns(data)
-
     ticker_dict = get_ticker_dict(data)
+
     df = pd.DataFrame(columns=['ticker', 'sector', 'price', 'mkt_cap', 'num_trades', 'PS', 'PB', 'PE', 'PEG', 'DCF'])
     for t in ticker_dict.items():
         if t[1] >= cluster_val:
@@ -103,22 +118,25 @@ def get_valuehub_data():
 
             r_data = requests.get(ratios_url).json()
             p_data = requests.get(profile_url).json()
-
+            
             if r_data and p_data:
-                sector, price, dcf, mkt_cap, ps, pe, pb, peg = 0, 0, 0, 0, 0, 0, 0, 0
-                pe = round(r_data[0]['peRatioTTM'], settings.NUM_DECIMALS)
-                pb = round(r_data[0]['priceToBookRatioTTM'], settings.NUM_DECIMALS)
-                peg = round(r_data[0]['pegRatioTTM'], settings.NUM_DECIMALS)
-                ps = round(r_data[0]['priceToSalesRatioTTM'], settings.NUM_DECIMALS)
-                sector = p_data[0]['sector']
-                price = p_data[0]['price']
-                dcf = round(p_data[0]['dcf'], settings.NUM_DECIMALS)
-                mkt_cap = int(p_data[0]['mktCap'] / settings.MKT_CAP_MULT) # puts it in millions
+                r_node = r_data[0]
+                p_node = p_data[0]
 
-                df.loc[len(df)] = ({'ticker': t[0], 'sector': sector,
-                                'price': price, 'mkt_cap': mkt_cap,
-                                'num_trades': t[1], 'PS': ps, 'PB': pb,
-                                'PE': pe, 'PEG': peg, 'DCF': dcf})
+                if check_for_nulls(r_node, p_node):
+                    sector, price, dcf, mkt_cap, ps, pe, pb, peg = 0, 0, 0, 0, 0, 0, 0, 0
+                    pe = round(r_node['peRatioTTM'], settings.NUM_DECIMALS)
+                    pb = round(r_node['priceToBookRatioTTM'], settings.NUM_DECIMALS)
+                    peg = round(r_node['pegRatioTTM'], settings.NUM_DECIMALS)
+                    ps = round(r_node['priceToSalesRatioTTM'], settings.NUM_DECIMALS)
+                    sector = p_node['sector']
+                    price = p_node['price']
+                    dcf = round(p_node['dcf'], settings.NUM_DECIMALS)
+                    mkt_cap = int(p_node['mktCap'] / settings.MKT_CAP_MULT) # puts it in millions
+                    df.loc[len(df)] = ({'ticker': t[0], 'sector': sector,
+                                    'price': price, 'mkt_cap': mkt_cap,
+                                    'num_trades': t[1], 'PS': ps, 'PB': pb,
+                                    'PE': pe, 'PEG': peg, 'DCF': dcf})
 
     sorted_df = df.sort_values(by='PE')
     sorted_df.reset_index(drop=True, inplace=True)
